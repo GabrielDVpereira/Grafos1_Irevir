@@ -1,8 +1,16 @@
-function verifyStrongConnectivity(graph, v) {
+function verifyStrongConnectivity(graph, v,isFW) {
     //Floyd-Warshall
-    return floydWarshall(graph, v);
+    if(isFW)
+        return floydWarshall(graph, v);
     //BFS
-    let bfsTree = BFS(graph);
+    let bfsTree;
+    let SC = true;
+    graph.forEach((vertex,i) =>{
+        bfsTree = BFS(graph,i,v);
+        console.log(bfsTree);
+        if(bfsTree.length !== (v - 1)) SC = false;
+    })
+    return SC;
 }
 
 function floydWarshall(graph, v){
@@ -28,24 +36,25 @@ function floydWarshall(graph, v){
     return true;
 }
 
-function BFS (graph) {
+function BFS (graph,i,v) {
     let queue = [];
     let visited = [];
     let bfsTree = [];
-    graph.forEach(vertex => {
-        queue.push(vertex);
-        visited[vertex] = 1;
+    let u;
+    for(let j = i; j < v; j++){
+        queue.push(graph[j]);
+        visited[j] = 1;
         while(queue.length){
-            queue.pop();
-            vertex.forEach(v =>{
-                if(visited[v] !== 1){
-                    visited[v] = 1;
-                    queue.push(v);
-                    bfsTree.push(v);
+            u = queue.pop();
+            u.forEach((v,k) =>{
+                if(v == 1 && visited[k] !== 1){
+                    visited[k] = 1;
+                    queue.push(graph[k]);
+                    bfsTree.push(k);
                 }
             })
         }
-    });
+    }
     return bfsTree;
 }
 
