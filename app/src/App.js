@@ -132,6 +132,7 @@ function App() {
 
   function finishGraph(){
     let graph = graph_matrix;
+    console.log("Grafo",graph);
     let isConnected = verifyStrongConnectivity(graph, vertex);
     if(isConnected){
       console.log("Este Grafo é fortemente conectado!")

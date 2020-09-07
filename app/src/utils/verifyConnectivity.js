@@ -1,4 +1,5 @@
 function verifyStrongConnectivity(graph, v,isFW) {
+    console.log("verify",graph);
     //Floyd-Warshall
     if(isFW)
         return floydWarshall(graph, v);
