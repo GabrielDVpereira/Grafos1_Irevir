@@ -1,9 +1,7 @@
 function verifyStrongConnectivity(graph, v, isFW) {
-  console.log("verify", graph);
   //Floyd-Warshall
   if (isFW) return floydWarshall(graph, v);
   //BFS
-  let bfsTree;
   let isStrongConnected = true;
   const graphReverse = revertGraph(graph);
 
@@ -59,7 +57,7 @@ function BFS(graph, i, v) {
     while (queue.length) {
       u = queue.pop();
       u.forEach((vertex, k) => {
-        if (vertex == 1 && visited[k] !== 1) {
+        if (vertex === 1 && visited[k] !== 1) {
           visited[k] = 1;
           queue.push(graph[k]);
           bfsTree.push(k);
