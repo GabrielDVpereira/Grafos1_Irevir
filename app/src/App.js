@@ -10,9 +10,15 @@ function App() {
   const [edges, setEdges] = useState(null);
   const [edgesCount, setEdgesCount] = useState(0);
   const [graph_matrix, setGraph_matrix] = useState(null);
+  const [reverse_graph_matrix, setReverse_Graph_matrix] = useState(null);
   const [selectedVertex, setSelectedVertex] = useState(null);
-  
-  const randomGraphStyle = useRef([]);
+  const [showReverse, setShowReverse] = useState(false);
+  const [reachedVertex, setReachedVertex] = useState([]);
+  const [reachedVertexReverse, setReachedVertexReverse] = useState([]);
+  const [isFinishedGraph, setIsFinishedGraph] = useState(false);
+
+  const [randomGraphStyle, setRandomStyle] = useState([]);
+
   function createGraph() {
     if (vertex <= 0) {
       //MENSAGEM NÃO VERTICE NÃO PODE SER MENOR QUE 0
@@ -39,12 +45,12 @@ function App() {
         position: "absolute",
       });
     }
-    randomGraphStyle.current = styleArray;
+    setRandomStyle(styleArray);
   };
 
   function calculateVertexDistance(origin, destination) {
-    const vertex1 = randomGraphStyle.current[origin];
-    const vertex2 = randomGraphStyle.current[destination];
+    const vertex1 = randomGraphStyle[origin];
+    const vertex2 = randomGraphStyle[destination];
     console.log(vertex1, vertex2);
 
     const vertex1X = vertex1.left;
@@ -60,7 +66,6 @@ function App() {
   }
 
   function connectVertex(origin, destination) {
-
     const isAlredyConnected = verifyConnectivity(origin, destination);
     if (isAlredyConnected) {
       console.log("JÁ TÁ CONECTADO!!");
@@ -75,7 +80,6 @@ function App() {
     } else {
       console.log("POSIÇÃO NÃO EXISTENTE");
     }
-    
   }
 
   function connectVertexBothDirection(origin, destination) {
@@ -104,7 +108,7 @@ function App() {
     }
   }
 
-  function removeConnection(origin, destination){
+  function removeConnection(origin, destination) {
     let newGraph = graph_matrix;
     let aux = edgesCount;
     const isAlredyConnected = verifyConnectivity(origin, destination);
@@ -130,34 +134,64 @@ function App() {
     return false;
   }
 
-  function finishGraph(){
+  function finishGraph() {
+    setIsFinishedGraph(true);
     let graph = graph_matrix;
-    console.log("Grafo",graph);
-    let isConnected = verifyStrongConnectivity(graph, vertex);
-    if(isConnected){
-      console.log("Este Grafo é fortemente conectado!")
+    let {
+      isStrongConnected,
+      graphBFS,
+      graphReverseBFS,
+      graphReverse,
+    } = verifyStrongConnectivity(graph, vertex);
+    setReverse_Graph_matrix(graphReverse);
+    setReachedVertexReverse(graphReverseBFS);
+    setReachedVertex(graphBFS);
+    if (isStrongConnected) {
+      console.log("Este Grafo é fortemente conectado!");
     } else {
       console.log("Este Grafo não é fortemente conectado");
     }
     return;
   }
 
-  const renderEdges = () => {
+  const getArrowColor = (i) => {
+    if (showReverse) {
+      if (isFinishedGraph) {
+        if (i == 0) {
+          return "#08f26e";
+        }
+        return reachedVertexReverse.includes(i) ? "#08f26e" : "red";
+      } else {
+        return "black";
+      }
+    } else {
+      if (isFinishedGraph) {
+        if (i == 0) {
+          return "#08f26e";
+        }
+        return reachedVertex.includes(i) ? "#08f26e" : "red";
+      } else {
+        return "black";
+      }
+    }
+  };
+
+  const renderEdges = (graph) => {
     const connectedEdges = [];
 
     for (let i = 0; i < vertex; i++) {
       for (let j = 0; j < vertex; j++) {
-        if (graph_matrix[i][j] === 1) {
+        if (graph[i][j] === 1) {
           connectedEdges.push(
             <Arrow
               points={[
-                randomGraphStyle.current[i].left,
-                randomGraphStyle.current[i].top,
-                randomGraphStyle.current[j].left,
-                randomGraphStyle.current[j].top,
+                randomGraphStyle[i].left,
+                randomGraphStyle[i].top,
+                randomGraphStyle[j].left,
+                randomGraphStyle[j].top,
               ]}
-              fill="black"
-              stroke="black"
+              fill={getArrowColor(i)}
+              stroke={getArrowColor(i)}
             />
           );
         }
@@ -165,19 +199,36 @@ function App() {
     }
     return connectedEdges;
   };
-  const renderVertex = () => {
-    const vertexes = graph_matrix.map((vertex, i) => (
+
+  const getCircleColor = (i) => {
+    if (showReverse) {
+      if (i === 0) {
+        return "#08f26e";
+      } else {
+        return reachedVertexReverse.includes(i) ? "#08f26e" : "red";
+      }
+    } else {
+      if (i === 0) {
+        return "#08f26e";
+      } else {
+        return reachedVertex.includes(i) ? "#08f26e" : "red";
+      }
+    }
+  };
+
+  const renderVertex = (graph) => {
+    const vertexes = graph.map((vertex, i) => (
       <>
         <Circle
           radius={5}
-          x={randomGraphStyle.current[i].left}
-          y={randomGraphStyle.current[i].top}
+          x={randomGraphStyle[i].left}
+          y={randomGraphStyle[i].top}
           stroke="black"
-          fill="red"
+          fill={getCircleColor(i)}
         />
         <Text
-          x={randomGraphStyle.current[i].left - 3}
-          y={randomGraphStyle.current[i].top + 10}
+          x={randomGraphStyle[i].left - 3}
+          y={randomGraphStyle[i].top + 10}
           text={i}
           fontSize={20}
           fontStyle="bold"
@@ -188,20 +239,33 @@ function App() {
     return vertexes;
   };
   const renderGraph = () => (
-    <Stage width={900} height={900}>
-      <Layer>
-        {renderEdges()}
-        {renderVertex()}
-      </Layer>
-    </Stage>
+    <>
+      {!isFinishedGraph && (
+        <button onClick={() => generateGraphStyle(vertex)}>Reordenar</button>
+      )}
+      <Stage width={900} height={900}>
+        <Layer>
+          {renderEdges(graph_matrix)}
+          {renderVertex(graph_matrix)}
+        </Layer>
+      </Stage>
+    </>
+  );
+
+  const renderReverseGraph = () => (
+    <>
+      <Stage width={900} height={900}>
+        <Layer>
+          {renderEdges(reverse_graph_matrix)}
+          {renderVertex(reverse_graph_matrix)}
+        </Layer>
+      </Stage>
+    </>
   );
   const renderGraphInputs = () => (
-    
     <div style={{ marginRight: 100 }}>
       <h3>{`Número restantes de arestas: ${edgesCount}`}</h3>
-      <button onClick={() => finishGraph()}>
-        Finalizar Grafo
-      </button>
+      <button onClick={() => finishGraph()}>Finalizar Grafo</button>
       {graph_matrix.map((grapth_vertex, i) => (
         <div key={i}>
           <p>Vértice número {i}</p>
@@ -246,6 +310,12 @@ function App() {
     </div>
   );
 
+  const renderShowReverseButton = () => (
+    <button onClick={() => setShowReverse(!showReverse)}>
+      Mostrar inversa
+    </button>
+  );
+
   return (
     <div>
       {!graph_matrix && renderGraphInfoForm()}
@@ -256,8 +326,9 @@ function App() {
             flexDirection: "row",
           }}
         >
-          {renderGraphInputs()}
-          {renderGraph()}
+          {!isFinishedGraph && renderGraphInputs()}
+          {isFinishedGraph && renderShowReverseButton()}
+          {showReverse ? renderReverseGraph() : renderGraph()}
         </div>
       )}
     </div>
