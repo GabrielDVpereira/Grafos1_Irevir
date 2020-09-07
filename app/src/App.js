@@ -11,24 +11,35 @@ function App() {
   const [edgesCount, setEdgesCount] = useState(0);
   const [graph_matrix, setGraph_matrix] = useState(null);
   const [selectedVertex, setSelectedVertex] = useState(null);
-  
-  const randomGraphStyle = useRef([]);
+
+  const [randomGraphStyle, setRandomGraphStyle] = useState([]);
+
+  console.log("graph_matrix", graph_matrix);
+
   function createGraph() {
     if (vertex <= 0) {
       //MENSAGEM NÃO VERTICE NÃO PODE SER MENOR QUE 0
-      console.log("Numero de vertex inválido!");
+      alert("Numero de vertex inválido!");
       return;
     }
     if (edges > vertex * (vertex - 1) && edges > 0) {
       //REGRA: ARESTAS <= VERTICES * (VERTICES-1)
-      console.log("Numero de artestas inválido!");
+      alert("Numero de artestas inválido!");
       return;
     }
-
+    initializeInputsValue();
     const graph = initGraph(vertex);
     setGraph_matrix(graph);
     generateGraphStyle(vertex);
   }
+
+  const initializeInputsValue = () => {
+    const array = [];
+    for (let i = 0; i < vertex; i++) {
+      array.push(0);
+    }
+    setSelectedVertex(array);
+  };
 
   const generateGraphStyle = (vertex) => {
     const styleArray = [];
@@ -39,13 +50,12 @@ function App() {
         position: "absolute",
       });
     }
-    randomGraphStyle.current = styleArray;
+    setRandomGraphStyle(styleArray);
   };
 
   function calculateVertexDistance(origin, destination) {
-    const vertex1 = randomGraphStyle.current[origin];
-    const vertex2 = randomGraphStyle.current[destination];
-    console.log(vertex1, vertex2);
+    const vertex1 = randomGraphStyle[origin];
+    const vertex2 = randomGraphStyle[destination];
 
     const vertex1X = vertex1.left;
     const vertex1Y = vertex1.top;
@@ -56,14 +66,16 @@ function App() {
     const distance = Math.sqrt(
       Math.pow(vertex1X - vertex2X, 2) + Math.pow(vertex1Y - vertex2Y, 2)
     );
-    console.log(distance);
   }
 
   function connectVertex(origin, destination) {
-
     const isAlredyConnected = verifyConnectivity(origin, destination);
     if (isAlredyConnected) {
-      console.log("JÁ TÁ CONECTADO!!");
+      alert("JÁ TÁ CONECTADO!!");
+      return;
+    }
+    if (origin == destination) {
+      alert("NÃO PODE CONECTAR UM VERTICE A ELE MESMO");
       return;
     }
     let newGraph = graph_matrix;
@@ -73,14 +85,16 @@ function App() {
       setEdgesCount(edgesCount - 1);
       calculateVertexDistance(origin, destination);
     } else {
-      console.log("POSIÇÃO NÃO EXISTENTE");
+      alert("POSIÇÃO NÃO EXISTENTE");
     }
-    
   }
 
   function connectVertexBothDirection(origin, destination) {
     let newGraph = graph_matrix;
-
+    if (origin == destination) {
+      alert("NÃO PODE CONECTAR UM VERTICE A ELE MESMO");
+      return;
+    }
     if (destination < graph_matrix.length) {
       let isOriginNotConnected = !verifyConnectivity(origin, destination);
       let isDestinationNotConnected = !verifyConnectivity(destination, origin);
@@ -100,16 +114,16 @@ function App() {
         setEdgesCount(edgesCount - 1);
       }
     } else {
-      console.log("POSIÇÃO NÃO EXISTENTE");
+      alert("POSIÇÃO NÃO EXISTENTE");
     }
   }
 
-  function removeConnection(origin, destination){
+  function removeConnection(origin, destination) {
     let newGraph = graph_matrix;
     let aux = edgesCount;
     const isAlredyConnected = verifyConnectivity(origin, destination);
     if (!isAlredyConnected) {
-      console.log("NÃO TÁ CONECTADO!!");
+      alert("NÃO TÁ CONECTADO!!");
       return;
     }
     if (destination < graph_matrix.length) {
@@ -119,7 +133,7 @@ function App() {
       setEdgesCount(aux);
       calculateVertexDistance(origin, destination);
     } else {
-      console.log("POSIÇÃO NÃO EXISTENTE");
+      alert("POSIÇÃO NÃO EXISTENTE");
     }
   }
 
@@ -130,13 +144,12 @@ function App() {
     return false;
   }
 
-  function finishGraph(){
-    let graph = graph_matrix;
-    let isConnected = verifyStrongConnectivity(graph, vertex);
-    if(isConnected){
-      console.log("Este Grafo é fortemente conectado!")
+  function finishGraph(graph) {
+    const isConnected = verifyStrongConnectivity(graph, vertex);
+    if (isConnected) {
+      alert("Este Grafo é fortemente conectado!");
     } else {
-      console.log("Este Grafo não é fortemente conectado");
+      alert("Este Grafo não é fortemente conectado");
     }
     return;
   }
@@ -150,10 +163,10 @@ function App() {
           connectedEdges.push(
             <Arrow
               points={[
-                randomGraphStyle.current[i].left,
-                randomGraphStyle.current[i].top,
-                randomGraphStyle.current[j].left,
-                randomGraphStyle.current[j].top,
+                randomGraphStyle[i].left,
+                randomGraphStyle[i].top,
+                randomGraphStyle[j].left,
+                randomGraphStyle[j].top,
               ]}
               fill="black"
               stroke="black"
@@ -169,14 +182,14 @@ function App() {
       <>
         <Circle
           radius={5}
-          x={randomGraphStyle.current[i].left}
-          y={randomGraphStyle.current[i].top}
+          x={randomGraphStyle[i].left}
+          y={randomGraphStyle[i].top}
           stroke="black"
           fill="red"
         />
         <Text
-          x={randomGraphStyle.current[i].left - 3}
-          y={randomGraphStyle.current[i].top + 10}
+          x={randomGraphStyle[i].left - 3}
+          y={randomGraphStyle[i].top + 10}
           text={i}
           fontSize={20}
           fontStyle="bold"
@@ -187,34 +200,47 @@ function App() {
     return vertexes;
   };
   const renderGraph = () => (
-    <Stage width={900} height={900}>
-      <Layer>
-        {renderEdges()}
-        {renderVertex()}
-      </Layer>
-    </Stage>
+    <>
+      <h1>Seu grafo!</h1>
+      <button onClick={() => generateGraphStyle(vertex)}>
+        Reagrupar grafo
+      </button>
+      <Stage
+        width={900}
+        height={900}
+        style={{ borderStyle: "solid", borderWidth: 1 }}
+      >
+        <Layer>
+          {renderEdges()}
+          {renderVertex()}
+        </Layer>
+      </Stage>
+    </>
   );
   const renderGraphInputs = () => (
-    
     <div style={{ marginRight: 100 }}>
       <h3>{`Número restantes de arestas: ${edgesCount}`}</h3>
-      <button onClick={() => finishGraph()}>
-        Finalizar Grafo
-      </button>
+      <button onClick={() => finishGraph(graph_matrix)}>Finalizar Grafo</button>
       {graph_matrix.map((grapth_vertex, i) => (
         <div key={i}>
           <p>Vértice número {i}</p>
           <div>
-            <input onChange={(e) => setSelectedVertex(e.target.value)} />
-            <button onClick={() => connectVertex(i, selectedVertex)}>
+            <input
+              onChange={(e) => {
+                let auxArray = selectedVertex;
+                auxArray[i] = e.target.value;
+                setSelectedVertex(auxArray);
+              }}
+            />
+            <button onClick={() => connectVertex(i, selectedVertex[i])}>
               Conectar
             </button>
             <button
-              onClick={() => connectVertexBothDirection(i, selectedVertex)}
+              onClick={() => connectVertexBothDirection(i, selectedVertex[i])}
             >
               Conexão dupla
             </button>
-            <button onClick={() => removeConnection(i, selectedVertex)}>
+            <button onClick={() => removeConnection(i, selectedVertex[i])}>
               Desconectar
             </button>
           </div>
